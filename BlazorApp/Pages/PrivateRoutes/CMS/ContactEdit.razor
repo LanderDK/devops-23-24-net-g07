@@ -1,0 +1,232 @@
+@page "/admin/cms/contact"
+@inject LocationService locationService
+@using Services.CMS;
+@using Shared.DTO.CMS;
+@using BlazorApp.Models;
+@using BlazorApp.Controllers;
+@using System.ComponentModel.DataAnnotations;
+@using Microsoft.AspNetCore.Components.Forms;
+@using BlazorApp.Components.Modals;
+@using Persistence.Data;
+@inject NavigationManager NavManager
+
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Admin - CMS Contact</PageTitle>
+
+<div class="sidebar">
+    <SideNavMenu />
+</div>
+
+<div class="containerLoc">
+    <h1 class="header2">Locatie</h1>
+    <div class="loc-details-con">
+        <div class="loc-wrapper">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2047.9370463549672!2d3.7806270106539936!3d51.07552655239289!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47c376fd48f2d687%3A0x1773eb5790d0402b!2sAntwerpsesteenweg%201022%2C%209040%20Gent!5e0!3m2!1sen!2sbe!4v1701706907842!5m2!1sen!2sbe" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+        <div class="loc-details">
+            <div class="alert-container">
+                <Alert Color="Color.Danger" @bind-Visible="@visible">
+                    <AlertDescription>
+                        @message
+                    </AlertDescription>
+                    <CloseButton />
+                </Alert>
+            </div>
+            <button class="changeBtn" @onclick="( () => ShowModal() )">Wijzig</button>
+            @if (location != null)
+            {
+                <p>@((MarkupString)location.Straat!)</p>
+                <p>@((MarkupString)location.Stad!)</p>
+                <p>@((MarkupString)location.Land!)</p>
+                <br />
+                <br />
+                <p>@((MarkupString)location.Email!)</p>
+                <p>@((MarkupString)location.Telefoon!)</p>
+                <br />
+                <p class="bolder">Openingsuren:</p>
+                <p>@((MarkupString)location.Week!)</p>
+                <p>@((MarkupString)location.Weekend!)</p>
+            }
+            <br />
+            <br />
+        </div>
+    </div>
+</div>
+
+<Modal @ref="modalRef">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Info wijzigen</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <Field>
+                <FieldLabel>Straat</FieldLabel>
+                <TextEdit @bind-Text="newStreet" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newStreet))
+                    {
+                        <p class="text-danger">Straat is verplicht</p>
+                    }
+            <Field>
+                <FieldLabel>Stad</FieldLabel>
+                <TextEdit @bind-Text="newCity" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newCity))
+                    {
+                        <p class="text-danger">Stad/gemeente is verplicht</p>
+                    }
+            <Field>
+                <FieldLabel>Land</FieldLabel>
+                <TextEdit @bind-Text="newCountry" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newCountry))
+                    {
+                        <p class="text-danger">Land is verplicht</p>
+                    }
+            <Field>
+                <FieldLabel>Email</FieldLabel>
+                <TextEdit @bind-Text="newEmail" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newEmail))
+                    {
+                        <p class="text-danger">Email is verplicht</p>
+                    }
+            <Field>
+                <FieldLabel>Telefoon</FieldLabel>
+                <TextEdit @bind-Text="newPhone" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newPhone))
+                    {
+                        <p class="text-danger">Telefoon is verplicht</p>
+                    }
+            <Field>
+                <FieldLabel>Weekdagen</FieldLabel>
+                <TextEdit @bind-Text="newWeek" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newWeek))
+                    {
+                        <p class="text-danger">Weekdagen is verplicht</p>
+                    }
+            <Field>
+                <FieldLabel>Weekend</FieldLabel>
+                <TextEdit @bind-Text="newWeekend" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newWeekend))
+                    {
+                        <p class="text-danger">Weekend is verplicht</p>
+                    }
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary" Clicked="@HideModal">Sluit</Button>
+            <Button Color="Color.Primary" Clicked="@UpdateLocation" Disabled="@(!AreRequiredFieldsFilled())">Opslaan</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private bool visible = false;
+    private string message = string.Empty;
+    private EditContext editContext;
+
+    private LocationDTO location;
+
+    private ContactData contactData = new ContactData();
+
+    protected override async Task OnInitializedAsync()
+    {
+        location = await locationService.GetLocation();
+
+        var l = new LocationDTO();
+
+        editContext = new EditContext(l);
+        editContext.OnFieldChanged += (sender, eventArgs) =>
+        {
+            editContext.Validate();
+            StateHasChanged();
+        };
+    }
+
+    private bool AreRequiredFieldsFilled()
+    {
+        return !string.IsNullOrWhiteSpace(newStreet)
+        && !string.IsNullOrWhiteSpace(newCity)
+        && !string.IsNullOrWhiteSpace(newCountry)
+        && !string.IsNullOrWhiteSpace(newEmail)
+        && !string.IsNullOrWhiteSpace(newPhone)
+        && !string.IsNullOrWhiteSpace(newWeek)
+        && !string.IsNullOrWhiteSpace(newWeekend);
+    }
+
+    int? id;
+    string? newStreet;
+    string? newCity;
+    string? newCountry;
+    string? newEmail;
+    string? newPhone;
+    string? newWeek;
+    string? newWeekend;
+
+    private Modal? modalRef;
+
+    private async Task<Task?> ShowModal()
+    {
+        id = location.Id;
+        newStreet = location.Straat;
+        newCity = location.Stad;
+        newCountry = location.Land;
+        newEmail = location.Email;
+        newPhone = location.Telefoon;
+        newWeek = location.Week;
+        newWeekend = location.Weekend;
+        return modalRef?.Show();
+    }
+
+    private Task? HideModal()
+    {
+        return modalRef?.Hide();
+    }
+
+    private async void UpdateLocation()
+    {
+        visible = false;
+        message = string.Empty;
+
+        var authenticationState = await authenticationStateTask;
+
+        if (authenticationState.User.IsInRole("Admin"))
+        {
+            LocationDTO loc = new()
+                {
+                    Id = location.Id,
+                    Straat = newStreet,
+                    Stad = newCity,
+                    Land = newCountry,
+                    Email = newEmail,
+                    Telefoon = newPhone,
+                    Week = newWeek,
+                    Weekend = newWeekend
+                };
+            await locationService.UpdateLocation(loc);
+            NavManager.NavigateTo("/admin/cms/contact", true);
+        }
+        else
+        {
+            message = "U heeft geen toegang tot bewerken.";
+            visible = true;
+        }
+
+        await HideModal();
+    }
+
+    private async Task SubmitForm()
+    {
+        Console.WriteLine("test");
+    }
+
+}

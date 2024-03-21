@@ -1,0 +1,106 @@
+@using Microsoft.JSInterop;
+@inject IJSRuntime JSRuntime
+@using System.Text.Json;
+@using Services.CMS;
+@using Shared.DTO.CMS;
+@using Persistence.Data;
+@inject DatabaseContext databaseContext
+@using Microsoft.AspNetCore.Components;
+@inject ChatbotService chatbotService
+<button class="btn" @onclick="ShowModal">@Text</button>
+<Modal @ref="modalRef">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Vraag toevoegen</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <Field>
+                <FieldLabel>Vraag</FieldLabel>
+                <TextEdit Placeholder="Vraag die de bezoeker aanklikt" @bind-Text="question" />
+            </Field>
+            <Field>
+                <RichTextEdit @ref="richTextEditRef" Theme="RichTextEditTheme.Snow" ContentChanged="@OnContentChanged"
+                                PlaceHolder="Antwoord..." SubmitOnEnter="false"
+                            ToolbarPosition="Placement.Bottom">
+                    <Editor>@answer</Editor>
+                    <Toolbar>
+                        <RichTextEditToolbarGroup>
+                            <RichTextEditToolbarButton Action="RichTextEditAction.Bold" />
+                            <RichTextEditToolbarButton Action="RichTextEditAction.Italic" />
+                            <RichTextEditToolbarButton Action="RichTextEditAction.Underline" />
+                            <RichTextEditToolbarButton Action="RichTextEditAction.Link" />
+                            <RichTextEditToolbarButton Action="RichTextEditAction.List" Value="ordered" />
+                            <RichTextEditToolbarButton Action="RichTextEditAction.List" Value="bullet" />
+                        </RichTextEditToolbarGroup>
+                    </Toolbar>
+                </RichTextEdit>
+            </Field>
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary" Clicked="@CloseModal">Sluit</Button>
+            <Button Color="Color.Primary" Clicked="@AddQuestion">Voeg toe</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+@code {
+    [Parameter]
+    public string Text { get; set; }
+
+    private Modal? modalRef;
+
+    protected new RichTextEdit richTextEditRef;
+    protected string savedContent;
+
+    string? question;
+    string? answer;
+
+    [Parameter]
+    public ChatBotQuestionDTO ParentQuestion { get; set; }
+
+    [Parameter]
+    public EventCallback Refresh { get; set; }
+
+    public void HandleRefresh()
+    {
+        Refresh.InvokeAsync();
+    }
+
+    public async Task AddQuestion()
+    {
+        savedContent = await richTextEditRef.GetHtmlAsync();
+        if (this.question == null || savedContent == null || this.question == "" || savedContent == "")
+            return;
+
+        ChatBotQuestionDTO question = new ChatBotQuestionDTO();
+        question.Question = this.question;
+        question.Answer = this.savedContent;
+
+        if (ParentQuestion != null)
+            await chatbotService.AddFollowUpQuestion(ParentQuestion, question);
+        else
+            await chatbotService.AddQuestion(question);
+
+        modalRef?.Hide();
+        this.question = null;
+        this.answer = null;
+
+        HandleRefresh();
+    }
+
+    public async Task OnContentChanged()
+    {
+        savedContent = await richTextEditRef.GetHtmlAsync();
+    }
+
+    private Task? CloseModal()
+    {
+        return modalRef?.Hide();
+    }
+
+    private Task? ShowModal()
+    {
+        return modalRef?.Show();
+    }
+}

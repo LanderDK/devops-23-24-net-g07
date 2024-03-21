@@ -1,0 +1,267 @@
+@page "/admin/kalenders/myagenda"
+@using Services.Core;
+@using Shared.DTO.Core;
+@using Shared.Enums;
+@inject NavigationManager NavManager
+@using Models
+@inject TimeSlotService timeSlotService
+@inject DoctorService doctorService
+@inject AppointmentService appointmentService
+@using Syncfusion.Blazor.Schedule
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs
+@using BlazorApp.Components.Modals;
+@attribute [Authorize(Roles = "Admin, Employee")]
+
+
+<div class="sidebar">
+    <SideNavMenu />
+</div>
+<div class="content">
+    <div class="agenda-container">
+        <div class="agenda-header">
+            <h1>Agenda</h1>
+            <div class="agenda-header-buttons">
+                <button class="btn" @onclick="ExportToIcs">Exporteer naar ICS</button>
+                <button class="btn" @onclick="ExportToExcel">Exporteer naar Excel</button>
+            </div>
+        </div>
+            <Select TValue="int?" SelectedValue="@SelectedDoctor" SelectedValueChanged="@OnSelectedValueChanged">
+            @if(Doctors != null) {
+                @foreach (var doctor in Doctors)
+                {
+                    <SelectItem TValue="int?" Value="@doctor.Id">@doctor.Name</SelectItem>
+                }
+            }
+            </Select>
+            <SfSchedule TValue="AppointmentData" @ref="@ScheduleRef" @bind-SelectedDate="@CurrentDate" AllowDragAndDrop="false" AllowResizing="false">
+                <ScheduleEvents TValue="AppointmentData" OnActionBegin="OnActionBegin" OnPopupOpen="OnPopupOpen" OnCellClick="OnCellClick"></ScheduleEvents>
+                    <ScheduleTemplates>
+                        <EditorTemplate>
+                            <table class="custom-event-editor" width="100%" cellpadding="5">
+                                <tbody>
+                                    @{
+                                        if((context as AppointmentData).AppointmentDTO != null) {
+                                        <tr>
+                                            <td class="e-textlabel">Patiënt</td>
+                                            <td colspan="4">
+                                                @((context as AppointmentData).Subject)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="e-textlabel">Starttijd</td>
+                                            <td colspan="4">
+                                                @((context as AppointmentData).StartTime.ToString("HH:mm"))
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="e-textlabel">Eindtijd</td>
+                                            <td colspan="4">
+                                                @((context as AppointmentData).EndTime.ToString("HH:mm"))
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="e-textlabel">Type</td>
+                                            <td colspan="4">
+                                                <select @bind="@((context as AppointmentData).TimeSlotDTO.AppointmentType)">
+                                                    @foreach (Shared.Enums.AppointmentType type in Enum.GetValues(typeof(Shared.Enums.AppointmentType)))
+                                                    {
+                                                        <option value="@type">@type</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="e-textlabel">Reden</td>
+                                            <td colspan="4">
+                                                @((context as AppointmentData).AppointmentDTO.Reason)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="e-textlabel">Opmerking</td>
+                                            <td colspan="4">
+                                                <SfTextBox Multiline="true" @bind-Value="@((context as AppointmentData).AppointmentDTO.Note)" Placeholder="Opmerking" />
+                                            </td>
+                                        </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </EditorTemplate>
+                    </ScheduleTemplates>
+                <ScheduleEventSettings DataSource="@DataSource" AllowAdding="false">
+                    <Template>
+                        <div class="template-wrap d-flex justify-content-between">
+                        @{
+                            var data = context as AppointmentData;
+                            var StartHour = data.StartTime.ToString("HH:mm");
+                            var EndHour = data.EndTime.ToString("HH:mm");
+                            <div class="subject"><b>@StartHour - @EndHour</b> @data.Subject</div>
+                        }
+                        </div>
+                    </Template>
+                </ScheduleEventSettings>
+                <ScheduleTimeScale Enable="true" SlotCount="1" Interval="15"></ScheduleTimeScale>
+                <ScheduleViews>
+                    <ScheduleView Option="View.Day" StartHour="07:00" EndHour="20:00"></ScheduleView>
+                    <ScheduleView Option="View.Week" StartHour="07:00" EndHour="20:00" FirstDayOfWeek="1"></ScheduleView>
+                    <ScheduleView Option="View.WorkWeek" StartHour="07:00" EndHour="20:00"></ScheduleView>
+                    <ScheduleView Option="View.Month" StartHour="07:00" EndHour="20:00"></ScheduleView>
+                    <ScheduleView Option="View.Agenda" StartHour="07:00" EndHour="20:00"></ScheduleView>
+                </ScheduleViews>
+            </SfSchedule>
+            <AppointmentPopup @ref="@AppointmentPopupRef" TimeSlot="SelectedTimeslot" DoctorId="SelectedDoctor" OnRefresh="LoadTimeSlots"/>
+            <AddTimeSlotPopUp @ref="@AddTimeSlotPopupRef" DoctorId="SelectedDoctor" OnTimeSlotCreated="LoadTimeSlots"/>
+    </div>
+</div>
+
+@code {
+
+    SfSchedule<AppointmentData> ScheduleRef;
+
+    private IEnumerable<TimeSlotDTO> TimeSlots { get; set; }
+    private TimeSlotDTO SelectedTimeslot { get; set; }
+    private IEnumerable<TimeSlotDTO> TimeSlotsByWeek { get; set; }
+
+    private AppointmentPopup AppointmentPopupRef;
+    private AddTimeSlotPopUp AddTimeSlotPopupRef;
+
+    private DateTime CurrentDate = DateTime.Now;
+    private List<AppointmentData> DataSource { get; set; }
+    private IEnumerable<DoctorDTO> Doctors { get; set; }
+        
+    private int SelectedDoctor { get; set; }
+    View CurrentView = View.Week;
+
+
+    private AppointmentData MapToAppointmentData(TimeSlotDTO timeSlot)
+    {
+        AppointmentData appointmentData = new AppointmentData
+        {
+            Id = (int)timeSlot.Id,
+            StartTime = timeSlot.DateTime,
+            EndTime = timeSlot.DateTime.AddMinutes(timeSlot.Duration),
+            TimeSlotDTO = timeSlot
+        };
+
+        if(timeSlot.AppointmentDTO != null)
+        {
+            appointmentData.Subject = timeSlot.AppointmentDTO.PatientDTO.Name;
+            appointmentData.CssClass = timeSlot.AppointmentType == Shared.Enums.AppointmentType.Consultation ? "occupied-consultation" : "occupied-operation";
+            appointmentData.AppointmentDTO = timeSlot.AppointmentDTO;
+        }
+        else
+        {
+            appointmentData.Subject = "Beschikbaar";
+            appointmentData.CssClass = "available";
+            appointmentData.IsReadonly = true;
+        }
+
+        return appointmentData;
+    }
+
+    private async Task LoadTimeSlots()
+    {
+        TimeSlots = await timeSlotService.GetTimeSlots(SelectedDoctor);
+        DataSource.Clear();
+        DataSource = TimeSlots.Select(MapToAppointmentData).ToList();
+    }
+
+    private async Task OnSelectedValueChanged(int? value)
+    {
+        SelectedDoctor = (int)value;
+        await LoadTimeSlots();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        DataSource = new List<AppointmentData>();
+        Doctors = await doctorService.GetDoctors();
+        SelectedDoctor = (int)Doctors.FirstOrDefault().Id;
+        await LoadTimeSlots();
+    }
+
+    public async void OnActionBegin(ActionEventArgs<AppointmentData> args)
+    {
+        if (args.ActionType == ActionType.EventRemove)
+        {
+            AppointmentData appointmentData = args.DeletedRecords[0];
+            await CancelAppointment(appointmentData.Id);
+            await LoadTimeSlots();
+            StateHasChanged();
+        } 
+        else if (args.ActionType == ActionType.EventChange)
+        {
+            AppointmentData appointmentData = args.ChangedRecords[0];
+            TimeSlotDTO timeSlot = TimeSlots.FirstOrDefault(ts => ts.Id == appointmentData.Id);
+            timeSlot.AppointmentDTO.Note = appointmentData.AppointmentDTO.Note;
+            timeSlot.AppointmentType = appointmentData.TimeSlotDTO.AppointmentType;
+            await appointmentService.UpdateAppointment(timeSlot.AppointmentDTO);
+            await timeSlotService.UpdateTimeSlot(timeSlot, SelectedDoctor);
+
+            await LoadTimeSlots();
+        }
+    }
+
+    public async Task OnCellClick(CellClickEventArgs args)
+    {
+        args.Cancel = true;
+
+        AddTimeSlotPopupRef.ShowModal(args.StartTime, args.EndTime);
+        
+    }
+
+    public async Task OnPopupOpen(PopupOpenEventArgs<AppointmentData> args)
+    {
+        if (args.Type == PopupType.QuickInfo)
+        {
+            if(args.Data.AppointmentDTO == null)
+            {
+                args.Cancel = true;
+                SelectedTimeslot = args.Data.TimeSlotDTO;
+                AppointmentPopupRef.ShowModal();
+            }
+        }
+    }
+
+    protected async Task CancelAppointment(int id)
+    {
+        TimeSlotDTO timeSlot = TimeSlots.FirstOrDefault(ts => ts.Id == id);
+        await appointmentService.DeleteAppointment(timeSlot.AppointmentDTO);
+    }
+
+    private async Task ExportToIcs()
+    {
+        await ScheduleRef.ExportToICalendarAsync();
+    }
+
+    private async Task ExportToExcel()
+    {
+        await ScheduleRef.ExportToExcelAsync();
+    }
+}
+
+<style>
+    .e-schedule .e-vertical-view .e-all-day-appointment-wrapper .e-appointment.available,
+    .e-schedule .e-vertical-view .e-day-wrapper .e-appointment.available,
+    .e-schedule .e-month-view .e-appointment.available {
+        background: rgba(79, 220, 76, 0.6);
+        border-color: rgba(79, 220, 76, 0.6);
+    }
+
+    .e-schedule .e-vertical-view .e-all-day-appointment-wrapper .e-appointment.occupied-consultation,
+    .e-schedule .e-vertical-view .e-day-wrapper .e-appointment.occupied-consultation,
+    .e-schedule .e-month-view .e-appointment.occupied-consultation {
+        background: #3182eb;
+        border-color: #3182eb;
+    }
+
+    .e-schedule .e-vertical-view .e-all-day-appointment-wrapper .e-appointment.occupied-operation,
+    .e-schedule .e-vertical-view .e-day-wrapper .e-appointment.occupied-operation,
+    .e-schedule .e-month-view .e-appointment.occupied-operation {
+        background: #f5a442;
+        border-color: #f5a442;
+    }
+
+</style>

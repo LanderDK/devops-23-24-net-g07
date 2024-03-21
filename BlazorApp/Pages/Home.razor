@@ -1,0 +1,98 @@
+@page "/"
+@using Services.CMS;
+@using Shared.DTO.CMS;
+@using Persistence.Data;
+@inject HomeHeaderService homeHeaderService
+@inject DatabaseContext databaseContext
+@using Microsoft.AspNetCore.Components;
+@using Syncfusion.Blazor.Navigations;
+@using Syncfusion.Blazor.Cards;
+@using Syncfusion.Blazor.Buttons;
+@inject Microsoft.AspNetCore.Components.NavigationManager UriHelper
+
+<PageTitle>Oogcentrum Vision</PageTitle>
+
+    <div class="background-div">
+        <div class="overlay">
+            @if(homeHeader != null){
+                <h1><strong>@homeHeader.Title</strong></h1>
+                <p class="header-text">@((MarkupString)homeHeader.Context)</p>
+            }
+            else
+            {
+                <p> Loading</p>
+            }
+            <div class="buttons">
+                <button class="custom-button btn-custom" @onclick=NavigateToAppointment>Maak een afspraak <span class="oi oi-calendar"></span></button>
+                <button class="custom-button btn-custom" @onclick=NavigateToContact>
+                    Contacteer ons <span class="oi oi-envelope-closed"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+<div class="carousel-container">
+    <div class="control-section template-carousel-section">
+        <div class="col-lg-12 content-wrapper">
+            <div class="carousel-sample">
+                <SfCarousel AnimationEffect="CarouselAnimationEffect.Fade" CssClass="templateCarousel">
+                    <ChildContent>
+                    @foreach (var image in indicatorImage)
+                    {
+                        <CarouselItem>
+                            <figure class="img-container">
+                                <img src="@UriHelper.ToAbsoluteUri($"images/{image}.jpg")" alt="@image" style="height:100%;width:100%;" />
+                            </figure>
+                        </CarouselItem>
+                    }
+                    </ChildContent>
+                    <PreviousButtonTemplate>
+                        <SfButton CssClass="e-flat e-outline nav-btn" title="Previous">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+                                <path d="m13.5 7.01 13 13m-13 13 13-13"></path>
+                            </svg>
+                        </SfButton>
+                    </PreviousButtonTemplate>
+                    <NextButtonTemplate>
+                        <SfButton CssClass="e-flat e-outline nav-btn" title="Next">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+                                <path d="m13.5 7.01 13 13m-13 13 13-13"></path>
+                            </svg>
+                        </SfButton>
+                    </NextButtonTemplate>
+                    <IndicatorsTemplate>
+                        <div class="indicator">
+                        <img src="@UriHelper.ToAbsoluteUri($"images/" + indicatorImage[context.Index] + ".jpg")" alt="image" style="height:100%;width:100%;" />
+                        </div>
+                    </IndicatorsTemplate>
+                </SfCarousel>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Inject] NavigationManager NavigationManager { get; set; }
+    private HomeHeaderDTO homeHeader;
+    (IEnumerable<BlogDTO> blogs, int totalPages) blogs;
+    private List<string> indicatorImage = new List<string>() { "Kantoor", "Team", "Interaction", "Oogonderzoek", "Laser" };
+    int currentPage = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        homeHeader = await homeHeaderService.GetHomeHeader();
+    }
+
+    private void NavigateToAppointment()
+    {
+        NavigationManager.NavigateTo("/afspraak");
+    }
+
+    private void NavigateToContact()
+    {
+        NavigationManager.NavigateTo("/contact");
+    }
+}

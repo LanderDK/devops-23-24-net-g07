@@ -1,0 +1,57 @@
+﻿.formbox {
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    gap: 50px;
+    margin-top: 20px;
+}
+
+.contactbox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.btnBox {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.gender-select {
+    background-color: white;
+    border: none;
+    padding: 10px;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25), 0px 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+.submitBtn {
+    border-radius: 7px;
+    height: 50px;
+    width: 150px;
+    border: none;
+    background-color: rgb(22, 44, 104);
+    color: azure;
+    font-weight: bold;
+}
+
+.submitBtn:hover {
+    background-color: azure;
+    color: rgb(22, 44, 104);
+    transition: 0.5s;
+    border: solid rgb(22, 44, 104);
+}
+
+.formLabel {
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 20px;
+    color: rgb(22, 44, 104);
+}
+
+@media screen and (max-width: 1050px) {
+    .formbox {
+        display: flex;
+        flex-direction: column;
+        margin-top: 20px;
+    }
+}

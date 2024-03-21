@@ -1,0 +1,80 @@
+﻿@using BlazorApp.Models;
+@using Shared.Enums;
+
+<EditForm Model="@clientData" OnValidSubmit="@SubmitClientData">
+    <DataAnnotationsValidator />
+    <div class="contactbox">
+        <div class="formbox">
+            <div class="coll">
+                <div class="la">
+                    <label class='formLabel' for="Name">Naam</label>
+                </div>
+                <div class='formInput'>
+                    <InputText id="Name" @bind-Value="clientData.Name" type='text' placeholder='John Doe' />
+                    <ValidationMessage For="@(() => clientData.Name)" />
+                </div>
+                <div class="la">
+                    <label class='formLabel' for="Email">E-mail</label>
+                </div>
+                <div class='formInput'>
+                    <InputText id="Email" @bind-Value="clientData.Email" type='text' placeholder='john@mail.com' />
+                    <ValidationMessage For="@(() => clientData.Email)" />
+                </div>
+                    <div class="la">
+                    <label class='formLabel' for="Gender">Geslacht</label>
+                </div>
+                <div class='formInput'>
+                    <select id="Gender" @bind="clientData.SelectedGender" class="gender-select">
+                        <option value="@Gender.Male">Man</option>
+                        <option value="@Gender.Female">Vrouw</option>
+                        <option value="@Gender.Other">Andere</option>
+                    </select>
+                    <ValidationMessage For="@(() => clientData.SelectedGender)" />
+                </div>
+            </div>
+            <div class="coll">
+                <div class="la">
+                    <label class='formLabel' for="Phone">Telefoon</label>
+                </div>
+                <div class='formInput'>
+                    <InputText id="Phone" @bind-Value="clientData.Phone" type='text' placeholder='0489432312' />
+                    <ValidationMessage For="@(() => clientData.Phone)" />
+                </div>
+                <div class="la">
+                    <label class='formLabel' for="birthDate">Geboortedatum</label>
+                </div>
+                <div class='formInput'>
+                    <InputDate id="birthDate" @bind-Value="clientData.BirthDate" />
+                    <ValidationMessage For="@(() => clientData.BirthDate)" />
+                </div>
+            </div>
+            <div class="coll">
+                <div class="la">
+                    <label class='formLabel' for="Reason">Reden voor consultatie</label>
+                </div>
+                <div class='formInput'>
+                    <InputTextArea id="Reason" @bind-Value="clientData.Reason" type='text' placeholder='Reden voor consultatie' />
+                    <ValidationMessage For="@(() => clientData.Reason)" />
+                </div>
+            </div>
+        </div>
+        <div class="btnBox">
+            <button type="submit" class="submitBtn">Verzenden</button>
+        </div>
+    </div>
+</EditForm>
+@code {
+    [Parameter]
+    public EventCallback<ClientData> OnContactSubmitted { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnReasonSubmitted { get; set; }
+
+    private ClientData clientData = new ClientData();
+
+
+    private async Task SubmitClientData()
+    {
+        OnContactSubmitted.InvokeAsync(clientData);
+    }
+}

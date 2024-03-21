@@ -1,0 +1,62 @@
+@page "/faq"
+@inherits ComponentBase
+@using Shared.DTO.CMS;
+@using Services.CMS;
+@inject FaqService faqService
+
+<PageTitle>FAQ</PageTitle>
+
+<div class="faq-page">
+    <div class="title-layout">
+        <h1>FAQ</h1>
+        <BindToLocation />
+    </div>
+    <div class="search-bar">
+        <input type="text" @bind-value="searchQuery" placeholder="Zoek FAQ" />
+    </div>
+    <div class="faq-container">
+        @if (GetFilteredFaqs() != null)
+        {
+            var filteredFaqs = GetFilteredFaqs();
+            @foreach (var f in filteredFaqs)
+            {
+                <div class="question-container">
+                    @if (f != null)
+                    {
+                        <QuestionFAQ Question=@f.Question Answer=@f.Answer/>
+                        <span class="line"></span>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <p>FaqObj is null.</p>
+        }
+    </div>
+</div>
+
+
+@code {
+    IEnumerable<FaqDTO>? FaqObj;
+    string searchQuery = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        FaqObj = await faqService.GetFaqs();
+    }
+
+    IEnumerable<FaqDTO>? GetFilteredFaqs()
+    {
+        if (FaqObj != null && !string.IsNullOrEmpty(searchQuery))
+        {
+            return FaqObj.Where(f => f.Question.ToLower().Contains(searchQuery.ToLower()));
+        }
+        return FaqObj;
+    }
+
+    void Search()
+    {
+        StateHasChanged();
+    }
+}

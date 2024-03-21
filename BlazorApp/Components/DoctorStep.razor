@@ -1,0 +1,47 @@
+@using Services.Core;
+@using Shared.DTO.Core; 
+@inject DoctorService doctorService
+<div class="DoctorStepContainer">
+    
+    <div class="doctorbox">
+        @if (doctors != null)
+        {
+            @foreach (var doc in doctors)
+            {
+                @if (doc != null)
+                {
+                    @if (doc.IsAvailable == true) {
+                        <button class="click" @onclick="(e) => SelectDoctor(doc.Id)" >
+                            @* <DoctorCard ImageSrc=@doc.ImageLink Name=@doc.Name Specialization=@doc.Specialization /> *@
+                            <TeamCard ImageSrc=@doc.ImageLink Name=@doc.Name Specialization="@doc.Specialization" DoctorId=@doc.Id />
+                        </button>
+                    }
+                                    
+                }
+            }
+        }
+        else
+        {
+                <p>DocObj is null.</p>
+        }
+
+    </div>
+</div>
+@code {
+    [Parameter]
+    public EventCallback<int?> OnDoctorSelected { get; set; }
+
+    private async Task SelectDoctor(int? id)
+    {
+        if(id != null)
+        {
+            await OnDoctorSelected.InvokeAsync(id);
+        }
+    }
+
+    private IEnumerable<DoctorDTO> doctors;
+    protected override async Task OnInitializedAsync()
+    {
+        doctors = await doctorService.GetDoctors();
+    }
+}

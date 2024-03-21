@@ -1,0 +1,40 @@
+<div class="card faq mb-3">
+    <div class="row">
+        @for (int i = 0; i < Faq.GetLength(0); i++)
+        {
+            int questionNumber = i;
+            <div class="col-md-4 text-center @(SelectedQuestionNr == questionNumber ? "selected" : "")">
+                <span @onclick="() => DisplayAnswer(questionNumber)" class="faqBtn" data-test-id="faq-item">
+                    @Faq[i, 0]
+                </span>
+            </div>
+        }
+    </div>
+    @if (displayedAnswer != "")
+    {
+        <div class="faq-content text-center" data-test-id="faq-content">
+        <hr>
+            @displayedAnswer
+        </div>
+    }
+</div>
+
+
+@code {
+    private string displayedAnswer = "";
+    public int SelectedQuestionNr { get; set; } = -1;
+
+    [Parameter]
+    public string[,] Faq { get; set; }
+
+    private void DisplayAnswer(int index)
+    {
+        if (displayedAnswer == Faq[index, 1]) {
+            displayedAnswer = "";
+            SelectedQuestionNr = -1;
+        } else {
+            displayedAnswer = Faq[index, 1];
+            SelectedQuestionNr = index;
+        }
+    }
+}

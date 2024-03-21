@@ -1,0 +1,114 @@
+.main-container {
+  min-height: 90vh;
+  height: fit-content;
+  width: 100%;
+  background: rgb(194, 228, 218);
+  background: linear-gradient(41deg, rgba(194, 228, 218, 1) 0%, rgba(167, 222, 195, 1) 52%, rgba(9, 244, 138, 0.36) 100%);
+  padding-bottom: 50px;
+}
+#AfspraakComponent {
+  display: flex;
+  align-content: center;
+  margin: 0 auto;
+}
+
+.title-layout {
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  align-items: left;
+  text-align: left;
+  color: rgb(22, 44, 104);
+  padding-top: 100px;
+  padding-left: 120px;
+}
+
+.headerBox {
+  margin-left: 120px;
+}
+
+.header {
+  font-size: 1.5rem;
+  margin-top: 20px !important;
+  color: rgb(22, 44, 104);
+}
+
+.succes {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.succes-card {
+  border-radius: 15px;
+  background-color: #93C5BB;
+  color: white;
+  padding: 30px;
+  text-align: center;
+}
+
+.meebrengen {
+  display: flex;
+  align-items: left !important;
+  justify-content: left !important;
+  text-align: left;
+  width: fit-content;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.leftt {
+  text-align: left;
+}
+
+.bck {
+  margin-top: 20px !important;
+}
+
+@media (max-width: 1400px) {
+
+  .title-layout {
+    padding-left: 30px;
+    padding-top: 20px;
+}
+
+
+  .headerBox {
+    margin-left: 20px;
+  }
+
+}
+
+@media (max-width: 950px) {
+  
+  .title-layout {
+      padding-left: 30px;
+      padding-top: 20px;
+  }
+
+  .headerBox {
+    margin-left: 20px;
+  }
+
+}
+
+@media only screen and (max-width: 600px) {
+  .title-layout {
+    padding-left: 30px;
+    padding-top: 20px;
+}
+
+
+  .headerBox {
+    margin-left: 20px;
+  }
+}
+

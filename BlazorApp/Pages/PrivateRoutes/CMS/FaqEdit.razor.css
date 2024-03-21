@@ -1,0 +1,198 @@
+.faq-page {
+    height: fit-content;
+    background: linear-gradient(41deg, rgba(194,228,218,1) 0%, rgba(167,222,195,1) 52%, rgba(9, 244, 138, 0.36) 100%);
+    padding-bottom: 70px;
+}
+
+.title-layout {
+
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: fit-content;
+    /*
+    background: rgb(194,228,218);
+    background: linear-gradient(41deg, rgba(194,228,218,1) 0%, rgba(167,222,195,1) 52%, rgba(9,246,140,0) 100%);
+    */
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-items: left;
+    text-align: left;
+    color: rgb(22, 44, 104); /* Tekstkleur aanpassen naar wens */
+    padding-top: 100px;
+    padding-left: 120px;
+ 
+  
+}
+
+.faq-container {
+    margin: 50px 150px 0px 150px;
+    height: fit-content;
+    background-color: rgba(255, 255, 255, 0.4);
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.alert-container {
+    margin: 50px 150px 0px 150px;
+}
+
+/* .question-container {
+    border: solid 1px rgb(22, 44, 104);
+} */
+
+.line {
+    display: inline-block;
+    height: 0.8px;
+    width: 100%;
+    background-color: rgb(80, 92, 125);
+}
+
+.addFaq {
+    padding-top: 30px;
+    padding-left: 30px;
+    padding-right: 150px;
+    width: 100%;
+    height: fit-content;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.qf {
+    width: fit-content;
+    height: fit-content;
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.mini-conatainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.editFaqButton {
+    background-color: rgb(222, 225, 61);
+    border: solid 3px rgb(203, 206, 53);
+    border-radius: 5px;
+    padding: 5px;
+    color: azure;
+    width: 70px;
+
+}
+
+.deleteFaqButton {
+    background-color: rgb(216, 109, 109);
+    border: solid 3px rgb(206, 70, 70);
+    border-radius: 5px;
+    padding: 5px;
+    color: azure;
+    width: 70px;
+}
+
+.confirmation-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: azure;
+    border: solid 3px rgb(206, 70, 70);
+    border-radius: 8px;
+    padding: 10px 25px;
+    color: azure;
+    transition: 0.3s;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+h3 {
+    text-align: center;
+    font-weight: 700;
+    color: rgb(206, 70, 70);
+}
+
+.popup-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
+.popDel {
+    background-color: rgb(216, 109, 109);
+    border: solid 2px rgb(206, 70, 70);
+    border-radius: 4px;
+    color: azure;
+    transition: 0.3s;
+    width: 40%;
+}
+
+.popCan {
+    background-color: rgb(146, 202, 183);
+    border: solid 2px rgb(109, 151, 137);
+    border-radius: 4px;
+    color: azure;
+    transition: 0.3s;
+    padding: 2% 0;
+    width: 40%;
+}
+
+.popDel:hover {
+    cursor: pointer;
+    transition: 0.3s;
+    background-color: azure;
+    color: rgb(206, 70, 70);
+}
+
+.popCan:hover {
+    cursor: pointer;
+    transition: 0.3s;
+    background-color: azure;
+    color: rgb(109, 151, 137);
+}
+
+.search-bar {
+    margin-top: 20px;
+    margin-left: 120px;
+}
+
+@media screen and (max-width: 1050px) {
+    .title-layout {
+        padding-left: 60px;
+        padding-top: 20px;
+    }
+
+    .addFaq {
+        padding-left: 0px;
+        flex-direction: column;
+    }
+
+    .faq-container {
+        margin: 60px 60px;
+        height: fit-content;
+        background-color: rgba(255, 255, 255, 0.4);
+        padding: 20px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .search-bar {
+        margin-top: 20px;
+        margin-left: 60px;
+    }
+
+    
+}

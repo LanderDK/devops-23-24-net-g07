@@ -1,0 +1,122 @@
+@using Services.CMS;
+@using Shared.DTO.CMS;
+@using Persistence.Data; 
+@inject DatabaseContext databaseContext
+@inject BlogService blogService
+@inject NavigationManager NavManager
+
+<div class="pl">
+    <div class="buttons">
+        <button class="add-btn" onclick="@ShowModal">Voeg blog toe</button>
+    </div>
+    <Modal @ref="modalRef">
+        <ModalContent Centered>
+            <ModalHeader>
+                <ModalTitle>Blog toevoegen</ModalTitle>
+                <CloseButton />
+            </ModalHeader>
+            <div class="alert-container">
+                <Alert Color="Color.Danger" @bind-Visible="@visible">
+                    <AlertDescription>
+                        @message
+                    </AlertDescription>
+                    <CloseButton />
+                </Alert>
+            </div>
+            <ModalBody>
+                <Field>
+                    <FieldLabel>Titel</FieldLabel>
+                    <TextEdit Placeholder="Geef titel..." @bind-Text="newTitle" />
+                </Field>
+                @if (string.IsNullOrWhiteSpace(newTitle))
+                    {
+                        <p class="text-danger">Titel is verplicht</p>
+                    }
+                <Field>
+                    <FieldLabel>Text</FieldLabel>
+                    <RichTextEditor @ref="richTextEditRef" />
+                </Field>
+                <Field>
+                    <FieldLabel>Afbeelding</FieldLabel>
+                    <TextEdit Placeholder="Geef afbeelding link..." @bind-Text="newImage" />
+                </Field>
+                @if (string.IsNullOrWhiteSpace(newImage))
+                    {
+                        <p class="text-danger">Afbeelding is verplicht</p>
+                    }
+            </ModalBody>
+            <ModalFooter>
+                <Button Color="Color.Secondary" Clicked="@HideModal">Sluit</Button>
+                <Button Color="Color.Primary" Clicked="@CreateBlog" Disabled="@(!AreRequiredFieldsFilled())">Opslaan</Button>
+            </ModalFooter>
+        </ModalContent>
+    </Modal>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private bool visible = false;
+    private string message = string.Empty;
+
+    protected RichTextEditor? richTextEditRef;
+    protected string? content;
+    string? newTitle;
+    string? newImage;
+    string? plainTextContent;
+
+    private Modal? modalRef;
+
+    private bool AreRequiredFieldsFilled()
+    {
+        return !string.IsNullOrWhiteSpace(newTitle)
+        && !string.IsNullOrWhiteSpace(newImage);
+    }
+
+    private Task? ShowModal()
+    {
+        return modalRef?.Show();
+    }
+
+    private Task? HideModal()
+    {
+        return modalRef?.Hide();
+    }
+
+    private async Task CreateBlog()
+    {
+        visible = false;
+        message = string.Empty;
+
+        var authenticationState = await authenticationStateTask;
+
+        if (authenticationState.User.IsInRole("Admin"))
+        {
+            plainTextContent = richTextEditRef?.contentAsText;
+            content = richTextEditRef?.contentAsHtml;
+
+            if (content == null)
+            {
+                message = "Er is geen content ingevuld.";
+                visible = true;
+                return;
+            }
+
+            BlogDTO newBlog = new()
+                {
+                    Title = newTitle,
+                    Text = content,
+                    ImageLink = newImage
+                };
+            await blogService.CreateBlog(newBlog);
+            await HideModal();
+            NavManager.NavigateTo("/admin/cms/actua", true);
+        }
+        else
+        {
+            message = "U heeft geen toegang tot creatie.";
+            visible = true;
+        }
+    }
+}

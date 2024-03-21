@@ -1,0 +1,170 @@
+@using Services.Core;
+@using Persistence.Data;
+@using BlazorApp.Components.Modals;
+@inject TimeSlotService timeSlotService
+@inject DatabaseContext databaseContext
+@using Shared.DTO.Core;
+
+<div class="afspraakbox container">
+    @* <div class="temp">
+        <b>Selected Doctor is: @Doctor.Name</b>
+        <SfCalendar TValue="DateTime?" @bind-Value="@SelectedDate">
+            <CalendarEvents TValue="DateTime?" OnRenderDayCell="CustomDates"></CalendarEvents>
+        </SfCalendar>
+        <button class="butTemp" @onclick="() => ChooseDate(DateTime.Now)">temp</button>
+    </div> *@
+    <div class="dateselector d-flex flex-column justify-content-center">
+        <div class="selector text-center">
+            <button class="dateselector-btn" @onclick="() => ChangeDate(-1)">🠜</button>
+            <InputDate @bind-Value="@SelectedDate" ></InputDate>
+            <button class="dateselector-btn" @onclick="() => ChangeDate(1)">🠞</button>
+        </div>
+        <div class="daybuttons text-center">
+            <button class="daybutton" @onclick="() => ChangeDateButtons(0)">Vandaag</button>
+            <button class="daybutton" @onclick="() => ChangeDateButtons(1)">Morgen</button>
+            <button class="daybutton" @onclick="() => ChangeDateButtons(2)">Overmorgen</button>
+            <button class="daybutton" @onclick="FirstAvailableDate">Volgende beschikbare dag</button>
+        </div>
+    </div>
+
+        <diV class="text-center">
+            <b>Beschikbare tijdslots bij @Doctor.Name op @SelectedDate.ToString("dddd, dd MMMM", new System.Globalization.CultureInfo("nl-NL")):</b>
+        </diV>
+        <div class="timeslots">
+            <div class="cont-time">
+        @if(FilteredTimeSlots != null && FilteredTimeSlots.Count() > 0)
+        {
+            @foreach (var timeSlot in FilteredTimeSlots)
+            {
+                <div class="card">
+                    <button class="timeslot" data-test-id="timeslot" @onclick="() => ChooseDate(timeSlot.Id)">@timeSlot.DateTime.ToString("HH:mm") ➜  @timeSlot.DateTime.AddMinutes(timeSlot.Duration).ToString("HH:mm")</button>
+                </div>
+            }
+        } else {
+            <div class="unavailable">
+                Geen tijdslots beschikbaar op deze datum
+            </div>
+        }
+            </div>
+        </div>
+</div>
+
+<style>
+    .e-calendar .e-content .e-cell.has-time-slot span.e-day,
+    .e-calendar .e-content .e-cell.no-time-slot span.e-day {
+        background-color: #28a745;
+        border-radius: 50%;
+        border: 2px solid #000;
+        display: inline-block;
+    }
+
+    .e-calendar .e-content .e-cell.has-time-slot span.e-day {
+        background-color: #28a745;
+    }
+
+    .e-calendar .e-content .e-cell.no-time-slot span.e-day {
+        background-color: #dc3545;
+    }
+</style>
+
+
+
+
+
+@code {
+    [Parameter]
+    public EventCallback<int?> OnTimeSlotSelected { get; set; }
+
+    [Parameter]
+    public IEnumerable<TimeSlotDTO> TimeSlotObj { get; set; }
+
+    private IEnumerable<TimeSlotDTO> FilteredTimeSlots { get; set; }
+
+    [Parameter]
+    public DoctorDTO Doctor { get; set; }
+
+
+    public DateTime SelectedDate
+    {
+        get => _selectedDate;
+        set
+        {
+            if (_selectedDate != value)
+            {
+                _selectedDate = value;
+                FilterTimeSlots();
+            }
+        }
+    }
+
+    private DateTime _selectedDate;
+
+    public string SelectedValue { get; set; } = DateTime.Now.ToString("M/d/yyyy");
+    public DateTime CurrentDate { get; set; }
+
+    private async Task ChooseDate(int? timeSlotId)
+    {
+        await OnTimeSlotSelected.InvokeAsync(timeSlotId);
+    }
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        _selectedDate = DateTime.Now;
+        SelectedDate = DateTime.Now;
+        CurrentDate = DateTime.Now;
+        TimeSlotObj = await timeSlotService.GetTimeSlots(Doctor.Id ?? 0);
+        TimeSlotObj = TimeSlotObj.Where(x => x.AppointmentDTO == null);
+        FilterTimeSlots();
+    }
+
+    private void ChangeDate(int days)
+    {
+        SelectedDate = SelectedDate.AddDays(days);
+    }
+
+    private void ChangeDateButtons(int days)
+    {
+        SelectedDate = CurrentDate.AddDays(days);
+    }
+
+    private void FirstAvailableDate()
+    {
+        if(TimeSlotObj != null && TimeSlotObj.Count() > 0)
+            SelectedDate = TimeSlotObj.Min(x => x.DateTime);
+    }
+
+    private void FilterTimeSlots()
+    {
+        if (TimeSlotObj != null)
+        {
+            FilteredTimeSlots = TimeSlotObj.Where(x => x.DateTime.Date == SelectedDate.Date).ToList();
+            StateHasChanged();
+        }
+    }
+
+
+    public void CustomDates(RenderDayCellEventArgs args)
+    {
+        if (args == null || args.Date == null || TimeSlotObj == null)
+        {
+            // Handle or log the null case
+            return;
+        }
+
+        var currentDate = args.Date.Date;
+
+        // Check if there is any time slot for the current date
+        bool hasTimeSlot = TimeSlotObj.Any(timeSlot =>
+        timeSlot.DateTime.Date == currentDate.Date);
+
+        if (hasTimeSlot)
+        {
+            args.CellData.ClassList += " has-time-slot"; // Apply a CSS class for dates with a TimeSlot
+        }
+        else
+        {
+            args.CellData.ClassList += " no-time-slot"; // Apply a different CSS class for dates without a TimeSlot
+        }
+    }
+}

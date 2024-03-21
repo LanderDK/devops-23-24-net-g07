@@ -1,0 +1,105 @@
+@using Services.CMS;
+@using Shared.DTO.CMS;
+@using Persistence.Data; 
+@inject DatabaseContext databaseContext
+@inject FaqService faqService
+@inject NavigationManager NavManager
+
+<button class="addFaqButton" onclick="@ShowModal">Nieuwe FAQ</button>
+
+<Modal @ref="modalRef">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Faq aanmaken</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <div class="alert-container">
+            <Alert Color="Color.Danger" @bind-Visible="@visible">
+                <AlertDescription>
+                    @message
+                </AlertDescription>
+                <AlertMessage>
+                    @* Gebruiken we niet. *@
+                </AlertMessage>
+                <CloseButton />
+            </Alert>
+        </div>
+        <ModalBody>
+            <Field>
+                <FieldLabel>Nieuwe vraag</FieldLabel>
+                <TextEdit Placeholder="Wat is een..." @bind-Text="newQuestion" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newQuestion))
+                    {
+                        <p class="text-danger">Vraag is verplicht</p>
+                    }
+            <Field>
+                <FieldLabel>Nieuw antwoord</FieldLabel>
+                <TextEdit Placeholder="Dit is een..." @bind-Text="newAnswer" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newAnswer))
+                    {
+                        <p class="text-danger">Antwoord is verplicht</p>
+                    }
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary" Clicked="@HideModal">Sluit</Button>
+            <Button Color="Color.Primary" Clicked="@CreateFaq" Disabled="@(!AreRequiredFieldsFilled())">Opslaan</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private bool visible = false;
+    private string message = string.Empty;
+
+    string? newQuestion;
+    string? newAnswer;
+
+    private Modal? modalRef;
+
+    private bool AreRequiredFieldsFilled()
+    {
+        return !string.IsNullOrWhiteSpace(newQuestion)
+        && !string.IsNullOrWhiteSpace(newAnswer);
+    }
+
+    private Task? ShowModal()
+    {
+        return modalRef?.Show();
+    }
+
+    private Task? HideModal()
+    {
+        return modalRef?.Hide();
+    }
+
+    private async Task CreateFaq()
+    {
+        visible = false;
+        message = string.Empty;
+
+        var authenticationState = await authenticationStateTask;
+
+        if (authenticationState.User.IsInRole("Admin"))
+        {
+            FaqDTO newFaq = new()
+                {
+                    Question = newQuestion,
+                    Answer = newAnswer
+                };
+            await faqService.CreateFaq(newFaq);
+            await HideModal();
+            NavManager.NavigateTo("/admin/cms/faq", true);
+        }
+        else
+        {
+            message = "U heeft geen toegang tot creatie.";
+            visible = true;
+        }
+    }
+}

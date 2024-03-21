@@ -1,0 +1,302 @@
+.content {
+    min-height: 100vh;
+    min-width: 100vw;
+    height: fit-content;
+    background: rgb(194,228,218);
+}
+
+.info-container {
+    margin-top: 8vh;
+    margin-left: 5vw;
+    margin-right: 2vw;
+    padding-bottom: 3%;
+}
+
+.alert-container {
+    margin: 50px 150px 0px 150px;
+}
+
+.add-button {
+    margin-left: 5%;
+    margin-right: 4%;
+    margin-bottom: 2%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.containerr {
+    margin-left: 5%;
+    margin-right: 4%;
+    height: fit-content;
+}
+
+h1 {
+    color: rgb(22, 44, 104);
+    margin-top: 6%;
+    margin-left: 5%;
+}
+
+.noBio {
+    font-style: italic;
+}
+
+.headers {
+    color: rgb(22, 44, 104);
+    width: 100%;
+    display: grid;
+    grid-template-columns: 10% 15% 15% 15% 15% 12% 18%;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.2em;
+}
+
+.headLine {
+    display: inline-block;
+    width: 100%;
+    height: 5px;
+    background-color: rgb(22, 44, 104);
+    border-radius: 5px;
+}
+
+.doc-container {
+    color: rgb(22, 44, 104);
+    font-size: 1.1rem;
+    height: fit-content;
+    display: grid;
+    grid-template-columns: 10% 15% 15% 15% 15% 12% 18%;
+    align-items: center;
+    text-align: center;
+    padding-bottom: 1%;
+    padding-top: 1%;
+}
+
+.doc-container:nth-of-type(odd) {
+    background-color: rgb(167,222,195);
+}
+
+.doc-container:nth-of-type(even) {
+    background-color: rgb(194,228,218);
+}
+
+.doc-action-con {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding: 2px;
+}
+
+.edit-btn {
+    background-color: rgb(214, 195, 85);
+    border: solid 2px rgb(165, 140, 0);
+    border-radius: 4px;
+    width: 35%;
+    padding: 5% 10%;
+    color: azure;
+    transition: 0.3s;
+    margin-right: 2.5%;
+}
+
+.del-btn {
+    background-color: rgb(216, 109, 109);
+    border: solid 2px rgb(206, 70, 70);
+    border-radius: 4px;
+    width: 35%;
+    padding: 5% 10%;
+    color: azure;
+    transition: 0.3s;
+    margin-left: 2.5%;
+}
+
+.edit-btn:hover, .del-btn:hover {
+    cursor: pointer;
+    transition: 0.3s;
+    border: azure solid 2px;
+}
+
+.confirmation-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: azure;
+    border: solid 3px rgb(206, 70, 70);
+    border-radius: 8px;
+    padding: 10px 25px;
+    color: azure;
+    transition: 0.3s;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+h3 {
+    text-align: center;
+    font-weight: 700;
+    color: rgb(206, 70, 70);
+}
+
+.popup-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
+.popDel {
+    background-color: rgb(216, 109, 109);
+    border: solid 2px rgb(206, 70, 70);
+    border-radius: 4px;
+    color: azure;
+    transition: 0.3s;
+    width: 40%;
+}
+
+.popCan {
+    background-color: rgb(146, 202, 183);
+    border: solid 2px rgb(109, 151, 137);
+    border-radius: 4px;
+    color: azure;
+    transition: 0.3s;
+    padding: 2% 0;
+    width: 40%;
+}
+
+.popDel:hover {
+    cursor: pointer;
+    transition: 0.3s;
+    background-color: azure;
+    color: rgb(206, 70, 70);
+}
+
+.popCan:hover {
+    cursor: pointer;
+    transition: 0.3s;
+    background-color: azure;
+    color: rgb(109, 151, 137);
+}
+
+
+.bio {
+    position: relative;
+}
+
+.tooltip-text {
+    display: none;
+}
+
+.bio:hover .tooltip-text {
+    display: block;
+    position: absolute;
+    height: 200px;
+    overflow: auto;
+    top: 100%;
+    left: 50%;
+    width: 150%;
+    transform: translateX(-50%);
+    background-color: rgb(22, 44, 104);
+    color: azure;
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    z-index: 1;
+}
+
+@media (max-width: 1400px) {
+    .info-container {
+        margin-top: 0;
+    }
+    
+}
+
+@media (max-width: 950px) {
+    .headers, .doc-container {
+        grid-template-columns: repeat(7, minmax(100px, 1fr));
+        /* width: fit-content; */
+    }
+
+    .content {
+        z-index: 0;
+        position: absolute;
+    }
+
+    h1 {
+        margin-top: 1.5%;
+        margin-left: 7%;
+        font-size: 1.5rem;
+    }
+
+    .headers p {
+        min-width: fit-content !important;
+        font-size: smaller;
+    }
+
+    .odd, .even {
+        width: fit-content;
+    }
+
+    .info-container {
+        min-width: fit-content !important;
+        margin: 0 !important;
+    }
+
+    .headLine {
+        display: none;
+    }
+
+    .containerr {
+        margin-left: 10%;
+        overflow-x: auto;
+        /* width: fit-content; */
+    }
+
+}
+
+@media (max-width: 600px) {
+    .headLine {
+        display: none;
+    }
+
+    .content {
+        z-index: 0;
+        position: absolute;
+    }
+
+    .info-container {
+        min-width: fit-content !important;
+        margin: 0 !important;
+    }
+
+    h1 {
+        margin-top: 1.5%;
+        margin-left: 10%;
+        font-size: 1.5rem;
+    }
+
+    .headers, .doc-container {
+        grid-template-columns: repeat(7, minmax(100px, 1fr));
+        /* width: fit-content; */
+    }
+
+    .headers p {
+        min-width: fit-content !important;
+        font-size: smaller;
+    }
+
+    .containerr {
+        margin-left: 10%;
+        overflow-x: auto;
+        /* width: fit-content; */
+    }
+
+    .add-button {
+        margin-left: 8%;
+        margin-top: 4%;
+        margin-bottom: 7%;
+    }
+
+    .odd, .even {
+        width: fit-content;
+    }
+    
+}
+

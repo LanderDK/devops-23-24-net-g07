@@ -1,0 +1,142 @@
+@page "/afspraak"
+@using Services.Core;
+@using BlazorApp.Models
+@inherits ComponentBase
+@inject AppointmentService appointmentService
+@inject DoctorService doctorService
+@inject PatientService patientService
+@inject TimeSlotService timeSlotService
+@using Microsoft.AspNetCore.Components.Forms;
+@using Shared.DTO.Core;
+@using Shared.Enums;
+
+<PageTitle>Afspraak maken</PageTitle>
+
+<div class="main-container">
+    <div class="title-layout">
+        <h1>Afspraak maken</h1>
+        <BindToLocation />
+    </div>
+    @* <div class="treatments" style="display: @(showTreatment ? "block" : "none")">
+        <div class="headerBox">
+            <p class="header">1. Waarvoor wilt u een afspraak maken?</p>
+        </div>
+        <TreatmentStep OnTreatmentSelected="HandleTreatmentSelected" />
+    </div> *@
+    <div class="doctors" style="display: @(showDoctors ? "block" : "none")">
+        <div class="headerBox">
+            <p class="header">1. Bij wie wens je een afspraak te maken?</p>
+        </div>
+        <DoctorStep OnDoctorSelected="HandleDoctorSelected" />
+    </div>
+    @if(SelectedDoctor != null) {
+        <div class="afspraak-plannen" style="display: @(showAfspraak ? "block" : "none")">
+        <div class="headerBox">
+            <p class="header">2. Selecteer uw afspraakmoment</p>
+        </div>
+            <AppointmentStep OnTimeSlotSelected="HandleTimeChosen" Doctor=SelectedDoctor />
+        </div>
+    }
+    <div class="contact-info" style="display: @(showContact ? "block" : "none")">
+        <div class="headerBox">
+            <p class="header">3. Vul uw contactgegevens in</p>
+        </div>
+        <ContactFormStep OnContactSubmitted="HandleClientData"/>
+    </div>
+    <div class="succes" style="display: @(showSucces ? "flex" : "none")">
+    @if(SelectedDoctor != null && SelectedTimeSlotDTO != null) {
+        <div class="succes-card">
+            <h1>Succes!</h1>
+            <p>Uw afspraak met @SelectedDoctor.Name is bevestigd!</p>
+            <p>Uw afspraak is op @SelectedTimeSlotDTO.DateTime.ToString("dddd, dd MMMM", new System.Globalization.CultureInfo("nl-NL")) om @SelectedTimeSlotDTO.DateTime.ToString("HH:mm").</p>
+            <br>
+            <p class="leftt bold">Wat brengt u mee?</p>
+            <br>
+            <div class="meebrengen">
+                <ul>
+                    <li>Uw huidige bril(len)</li>
+                    <li>verpakking van contactlenzen, naam van de vloeistof en lenzenhouder</li>
+                    <li>Uw medicatielijst</li>
+                    <li>Uw oogdruppellijst</li>
+                    <li>Uw e-Id</li>
+                    <li>Klevers van uw mutualiteit</li>
+                </ul>
+            </div>
+            <p class="leftt">Indien u komt voor een oogonderzoek in het kader van diabetes, krijgt u waarschijnlijk druppels in uw ogen die uw zicht enkele uren wazig maken.<br>
+                U komt dan best met een chauffeur of met het openbaar vervoer. </p>
+            <br>
+            <p class="leftt">Indien u graag een bril wil laten opmeten, is het echter belangrijk de contactlenzen minstens 24 uur voorafgaand aan het onderzoek uit te laten. </p>
+            <br>
+            <a href="" class="bck">Ga terug</a>
+        </div>
+    }
+    </div>
+</div>
+
+@code {
+
+    private String SelectedTreatment = "";
+    private DoctorDTO SelectedDoctor;
+    private int? SelectedTimeSlotId;
+    private TimeSlotDTO SelectedTimeSlotDTO;
+    private string Reason = "";
+
+    private bool showDoctors = true;
+    private bool showTreatment = false;
+    private bool showAfspraak = false;
+    private bool showContact = false;
+    private bool showSucces = false;
+
+    private void HandleTreatmentSelected(string selectedTreatment)
+    {
+        SelectedTreatment = selectedTreatment;
+        showTreatment = !showTreatment;
+        showDoctors = !showDoctors;
+    }
+
+
+    private async Task HandleDoctorSelected(int? doctorId)
+    {
+        SelectedDoctor = await doctorService.GetDoctor(doctorId ?? 0);
+
+        showDoctors = !showDoctors;
+        showAfspraak = !showAfspraak;
+    }
+
+    private async Task HandleTimeChosen(int? timeSlotId)
+    {
+        SelectedTimeSlotId = timeSlotId;
+        IEnumerable<TimeSlotDTO> timeSlots = await timeSlotService.GetTimeSlots(SelectedDoctor.Id ?? 0);
+        SelectedTimeSlotDTO = timeSlots.FirstOrDefault(ts => ts.Id == timeSlotId);
+
+        showAfspraak = !showAfspraak;
+        showContact = !showContact;
+    }
+
+    private async Task HandleClientData(ClientData clientData)
+    {
+        showContact = !showContact;
+        showSucces = !showSucces;
+
+        PatientDTO patientDTO = new PatientDTO {
+            Name = clientData.Name,
+            Email = clientData.Email,
+            PhoneNumber = clientData.Phone,
+            DateOfBirth = clientData.BirthDate,
+            Gender = clientData.SelectedGender,
+            BloodType = BloodType.APositive // placeholder
+        };
+        Reason = clientData.Reason;
+        await MakeAppointment(patientDTO);
+    }
+    
+    private async Task MakeAppointment(PatientDTO patient)
+    {
+        PatientDTO createdPatient = await patientService.CreatePatient(patient);
+
+        int patientId = createdPatient.Id ?? 0;
+        
+        await appointmentService.CreateAppointment((int)SelectedTimeSlotId, patientId, Reason, "Nog geen notitie toegevoegd");
+    }
+
+}

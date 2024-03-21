@@ -1,0 +1,230 @@
+@page "/admin/cms/faq"
+@inherits ComponentBase
+@using Shared.DTO.CMS;
+@using Services.CMS;
+@using Persistence.Data;
+@inject FaqService faqService
+@using BlazorApp.Components.Modals;
+@using Microsoft.AspNetCore.Components;
+@inject DatabaseContext databaseContext
+@inject NavigationManager NavManager
+
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Admin - CMS FAQ</PageTitle>
+
+<div class="sidebar">
+    <SideNavMenu />
+</div>
+
+<div class="faq-page">
+    <div class="title-layout">
+        <h1>FAQ</h1>
+        <a><u>Home</u> > FAQ </a>
+    </div>
+    <div class="addFaq">
+        <div class="search-bar">
+            <input type="text" @bind-value="searchQuery" placeholder="Zoek FAQ" />
+        </div>
+        <div class="center">
+            <AddFaqPopUp />
+        </div>
+    </div>
+    <div class="alert-container">
+        <Alert Color="Color.Danger" @bind-Visible="@visible">
+            <AlertDescription>
+                @message
+            </AlertDescription>
+            <CloseButton />
+        </Alert>
+    </div>
+    <div class="faq-container">
+        @if (GetFilteredFaqs() != null)
+        {
+            var filteredFaqs = GetFilteredFaqs();
+            @foreach (var f in filteredFaqs)
+            {
+                <div class="question-container">
+                    @if (f != null)
+                    {
+                        <div class="mini-conatainer">
+                            <div class="qf">
+                                <QuestionFAQ Question=@f.Question Answer=@f.Answer />
+                            </div>
+                            <div class="btns">
+                                <button class="editFaqButton" @onclick="( () => ShowModal(f) )"><Icon Name="IconName.Edit" /></button>
+                                <button class="deleteFaqButton" @onclick="() => ShowDeleteConfirmationPopup()"><Icon Name="IconName.Delete" /></button>
+                                @if (ShowDeleteConfirmation)
+                                        {
+                                            <div class="confirmation-popup" style="display: @(ShowDeleteConfirmation ? "flex" : "none")">
+                                                <h3>Bent u zeker?</h3>
+                                                <div class="popup-buttons">
+                                                    <button class="popDel" @onclick="() => DeleteFaq(f)">Confirm</button>
+                                                    <button class="popCan" @onclick="CancelDelete">Cancel</button>
+                                                </div>
+                                            </div>
+                                        }
+                            </div>                          
+                        </div>
+                        <span class="line"></span>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <p>FaqObj is null.</p>
+        }
+    </div>
+</div>
+
+<Modal @ref="modalRef">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Vraag wijzigen</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <Field>
+                <FieldLabel>Vraag</FieldLabel>
+                <TextEdit Placeholder="Wat is een..." @bind-Text="newQuestion" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newQuestion))
+                    {
+                        <p class="text-danger">Vraag is verplicht</p>
+                    }
+            <Field>
+                <FieldLabel>Antwoord</FieldLabel>
+                <TextEdit Placeholder="Dit is een..." @bind-Text="newAnswer" />
+            </Field>
+            @if (string.IsNullOrWhiteSpace(newAnswer))
+                    {
+                        <p class="text-danger">Antwoord is verplicht</p>
+                    }
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary" Clicked="@HideModal">Sluit</Button>
+            <Button Color="Color.Primary" Clicked="@UpdateFaq" Disabled="@(!AreRequiredFieldsFilled())">Opslaan</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private bool visible = false;
+    private string message = string.Empty;
+    private bool ShowDeleteConfirmation = false;
+
+    string searchQuery = "";
+
+    private IEnumerable<FaqDTO>? FaqObj;
+    private FaqDTO clickedFaq;
+
+    protected override async Task OnInitializedAsync()
+    {
+        FaqObj = await faqService.GetFaqs();
+    }
+
+    private bool AreRequiredFieldsFilled()
+    {
+        return !string.IsNullOrWhiteSpace(newQuestion)
+        && !string.IsNullOrWhiteSpace(newAnswer);
+    }
+
+    IEnumerable<FaqDTO>? GetFilteredFaqs()
+    {
+        if (FaqObj != null && !string.IsNullOrEmpty(searchQuery))
+        {
+            return FaqObj.Where(f => f.Question.ToLower().Contains(searchQuery.ToLower()));
+        }
+        return FaqObj;
+    }
+
+    void Search()
+    {
+        StateHasChanged();
+    }
+
+    int? id;
+    string? newQuestion;
+    string? newAnswer;
+
+    private Modal? modalRef;
+
+    private async Task<Task?> ShowModal(FaqDTO Faq)
+    {
+        clickedFaq = Faq;
+        id = Faq.Id;
+        newQuestion = Faq.Question;
+        newAnswer = Faq.Answer;
+        return modalRef?.Show();
+    }
+
+    private Task? HideModal()
+    {
+        return modalRef?.Hide();
+    }
+
+    private async void UpdateFaq()
+    {
+        visible = false;
+        message = string.Empty;
+
+        var authenticationState = await authenticationStateTask;
+
+        if (authenticationState.User.IsInRole("Admin"))
+        {
+            FaqDTO faq = new()
+                {
+                    Id = clickedFaq.Id,
+                    Question = newQuestion,
+                    Answer = newAnswer
+                };
+            await faqService.UpdateFaq(faq);
+            NavManager.NavigateTo("/admin/cms/faq", true);
+        }
+        else
+        {
+            message = "U heeft geen toegang tot bewerken.";
+            visible = true;
+        }
+
+        await HideModal();
+    }
+
+    private async Task ShowDeleteConfirmationPopup()
+    {
+        ShowDeleteConfirmation = true;
+    }
+
+    private async void DeleteFaq(FaqDTO f)
+    {
+        visible = false;
+        message = string.Empty;
+
+        var authenticationState = await authenticationStateTask;
+
+        if (authenticationState.User.IsInRole("Admin"))
+        {
+            await faqService.DeleteFaq(f);
+            NavManager.NavigateTo("/admin/cms/faq", true);
+        }
+        else
+        {
+            message = "U heeft geen toegang tot verwijderen.";
+            visible = true;
+        }
+    }
+
+    private void CancelDelete()
+    {
+        ShowDeleteConfirmation = false;
+    }
+
+
+}
+
+

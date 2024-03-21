@@ -1,0 +1,174 @@
+@using Services.Core;
+@using Shared.DTO.Core;
+@using Shared.Enums;
+@using Persistence.Data;
+@using Newtonsoft.Json;
+@inject DatabaseContext databaseContext
+@inject DoctorService doctorService
+@inject NavigationManager NavManager
+
+    <button class="add-btn" onclick="@ShowModal">Voeg een dokter toe</button>
+    <Modal @ref="modalRef">
+        <ModalContent Centered>
+            <ModalHeader>
+                <ModalTitle>Dokter toevoegen</ModalTitle>
+                <CloseButton />
+            </ModalHeader>
+            <div class="alert-container">
+                <Alert Color="Color.Danger" @bind-Visible="@visible">
+                    <AlertDescription>
+                        @message
+                    </AlertDescription>
+                    <AlertMessage>
+                        @* Gebruiken we niet. *@
+                    </AlertMessage>
+                    <CloseButton />
+                </Alert>
+            </div>
+            <ModalBody>
+                <Field>
+                    <FieldLabel>Naam</FieldLabel>
+                    <TextEdit Placeholder="Geef een naam" @bind-Text="newName" />
+                    @if (string.IsNullOrWhiteSpace(newName))
+                    {
+                        <p class="text-danger">Naam is verplicht</p>
+                    }
+                </Field>
+                <Field>
+                    <FieldLabel>Wachtwoord</FieldLabel>
+                    <TextEdit Placeholder="Geef een wachtwoord" @bind-Text="newPassword" type="password"/>
+                </Field>
+                @if (string.IsNullOrWhiteSpace(newPassword))
+                    {
+                        <p class="text-danger">Paswoord is verplicht</p>
+                    }
+                <Field>
+                    <FieldLabel>Email</FieldLabel>
+                    <TextEdit Placeholder="Geef een email" @bind-Text="newEmail" />
+                </Field>
+                @if (string.IsNullOrWhiteSpace(newEmail))
+                    {
+                        <p class="text-danger">Email is verplicht</p>
+                    }
+                <Field>
+                    <FieldLabel>Specialisatie</FieldLabel>
+                    <TextEdit Placeholder="Geef een specialisatie" @bind-Text="newSpecialization" />
+                    @if (string.IsNullOrWhiteSpace(newSpecialization))
+                    {
+                        <p class="text-danger">Specialisatie is verplicht</p>
+                    }
+                </Field>
+                <Field>
+                    <FieldLabel>Geslacht</FieldLabel>
+                    <Select @bind-SelectedValue="@newGender">
+                        <SelectItem Value="Gender.Male">Man</SelectItem>
+                        <SelectItem Value="Gender.Female">Vrouw</SelectItem>
+                        <SelectItem Value="Gender.Other">Andere</SelectItem>
+                    </Select>
+                </Field>
+                <Field>
+                    <FieldLabel>Biografie</FieldLabel>
+                    <TextEdit Placeholder="Geef een biografie" @bind-Text="newBiograph" />
+                </Field>
+                <Field>
+                    <FieldLabel>Link naar profielfoto</FieldLabel>
+                    <TextEdit Placeholder="Geef link naar image van dokter" @bind-Text="newImageLink" />
+                </Field>
+            </ModalBody>
+            <ModalFooter>
+                <Button Color="Color.Secondary" Clicked="@HideModal">Sluit</Button>
+                <Button Color="Color.Primary" Clicked="@CreateDoctor" Disabled="@(!AreRequiredFieldsFilled())">Toevoegen</Button>
+            </ModalFooter>
+        </ModalContent>
+    </Modal>
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private bool visible = false;
+    private string message = string.Empty;
+
+    string newName;
+    string newSpecialization;
+    Gender newGender;
+    string? newBiograph;
+    string? newImageLink;
+    string newEmail;
+    string newPassword;
+
+    private Modal? modalRef;
+
+
+    private bool AreRequiredFieldsFilled()
+    {
+        return !string.IsNullOrWhiteSpace(newName)
+        && !string.IsNullOrWhiteSpace(newPassword)
+        && !string.IsNullOrWhiteSpace(newEmail)
+        && !string.IsNullOrWhiteSpace(newSpecialization);
+    }
+
+    private Task? ShowModal()
+    {
+        return modalRef?.Show();
+    }
+
+    private Task? HideModal()
+    {
+        return modalRef?.Hide();
+    }
+
+    private async Task CreateDoctor()
+    {
+        visible = false;
+        message = string.Empty;
+
+        var authenticationState = await authenticationStateTask;
+
+        if (authenticationState.User.IsInRole("Admin"))
+        {
+            var userId = await doctorService.CreateDoctorInAuth0(newName, newEmail, newPassword);
+
+            if (userId == "-1")
+            {
+                message = "Niet alle velden zijn correct ingevuld!";
+                visible = true;
+                return;
+            }
+
+            DoctorDTO newDoctor = new()
+            {
+                Name = newName,
+                Specialization = newSpecialization,
+                Gender = newGender,
+                Biograph = newBiograph,
+                ImageLink = newImageLink,
+                Auth0Id = userId
+            };
+            await doctorService.CreateDoctor(newDoctor);
+
+            await HideModal();
+
+            NavManager.NavigateTo("/admin/dokters", true);
+        }
+        else
+        {
+            message = "U heeft geen toegang tot creatie.";
+            visible = true;
+        }
+    }
+
+    public class Response
+    {
+        public dynamic created_at { get; set; }
+        public dynamic email { get; set; }
+        public dynamic email_verified { get; set; }
+        public dynamic name { get; set; }
+        public dynamic nickname { get; set; }
+        public dynamic picture { get; set; }
+        public dynamic updated_at { get; set; }
+        public dynamic user_id { get; set; }
+        public dynamic username { get; set; }
+    }
+}

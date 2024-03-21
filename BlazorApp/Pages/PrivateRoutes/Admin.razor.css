@@ -1,0 +1,50 @@
+.admin-container {
+    background: rgb(165, 216, 201);
+    background: linear-gradient(41deg, rgba(194,228,218,1) 0%, rgba(167,222,195,1) 52%, rgba(161, 228, 198, 0.36) 100%);
+    min-height: 90.3vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10vh;
+}
+
+.box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10vh;
+}
+
+.admin-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.admin-inf {
+    margin-top: 30px;
+    color: rgb(22, 44, 104);
+}
+
+h1 {
+    font-size: 30px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.access-control {
+    margin-top: 10vh;
+}
+
+@media (max-width: 1400px) {
+    .admin-container {
+        margin: 0px !important;
+        height: 86.3vh !important;
+    }
+
+    .he {
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
+}

@@ -1,0 +1,71 @@
+@page "/behandelingen/{Name}"
+@using Services.CMS;
+@using Shared.DTO.CMS;
+@inject TreatmentService treatmentService
+
+<PageTitle>Behandeling @Name</PageTitle>
+
+<div class="background-div">
+    <div class="overlay">
+
+        @if (treatment != null)
+        {
+            <h1 class="text-capitalize">@treatment.Name</h1>
+
+            <span class="breadcrumbs text-capitalize">
+                <BindToLocation />
+            </span>
+
+            <div class="behandelingContent">
+                <div class="container-fluid p-0 m-0">
+                    <div class="row d-flex align-items-stretch mb-4 g-2">
+                        <div class="col-md-10 treatment-outer-col">
+                            <div class="card h-100 px-4">
+                                <div class="card-body p-3 pt-4">
+                                    <h2 class="card-title mb-3">Over de @treatment.Name</h2>
+                                    @((MarkupString)@treatment.Description)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 image-col">
+                            <div class="card h-100 d-flex justify-content-center align-items-center">
+                                <img src="@treatment.ImageLink" class="h-20 treatmentImage" alt="Surgery Image">
+                            </div>
+                        </div>
+                    </div>
+                    <FAQ Faq="@faq" />
+                </div>
+            </div>
+        }
+
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Name { get; set; }
+
+    string[,] faq = new string[,] {
+        {
+            "Kom ik in aanmerking?",
+            "Of je in aanmerking komt voor behandeling hangt af van verschillende factoren zoals je ooggezondheid, medische geschiedenis en specifieke aandoeningen. Ons team van oogartsen voert een grondige evaluatie uit tijdens een consultatie om te beoordelen of je in aanmerking komt voor de behandeling."
+        },
+        {
+            "Hoe plan ik een afspraak?",
+            "Een afspraak plannen is eenvoudig. Je kunt ons online afsprakensysteem op deze website gebruiken, klik op de Maak een afspraak knop bovenaan en maak een afspraak of tijdens kantooruren kan u telefonisch contact opnemen met onze praktijk om zo een afspraak te maken. Ons personeel helpt je graag bij het vinden van een geschikt tijdstip voor je consultatie of behandeling."
+        },
+        {
+            "Wat zijn de tarieven?",
+            "De tarieven voor behandelingen kunnen variëren op basis van het type procedure dat nodig is, de complexiteit van de behandeling en eventuele aanvullende diensten die nodig zijn. Wij hanteren transparante prijzen en kunnen je tijdens je consultatie een gedetailleerd overzicht van de kosten verstrekken."
+        }
+    };
+
+    private TreatmentDTO treatment;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var treatments = await treatmentService.GetTreatments();
+        treatment = treatments.Where(t => t.Name == this.Name).FirstOrDefault();
+
+    }
+}
